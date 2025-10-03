@@ -1,6 +1,10 @@
 // src/organizations/organizations.service.ts
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
@@ -13,9 +17,6 @@ export class OrganizationsService {
   constructor(
     @InjectRepository(Organization)
     private readonly organizationRepository: Repository<Organization>,
-
-    // This is no longer strictly needed in this service after our refactor,
-    // but can be useful if you add other methods that need to look up users.
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
@@ -23,7 +24,10 @@ export class OrganizationsService {
   /**
    * Creates a new organization and assigns the authenticated user as the owner.
    */
-  async create(createOrganizationDto: CreateOrganizationDto, user: User): Promise<Organization> {
+  async create(
+    createOrganizationDto: CreateOrganizationDto,
+    user: User,
+  ): Promise<Organization> {
     const { orgName } = createOrganizationDto;
 
     const newOrg = this.organizationRepository.create({
@@ -57,12 +61,17 @@ export class OrganizationsService {
     }
 
     return organization;
+
   }
 
   /**
    * Updates an organization's data.
+   * Note: This does not currently have authorization logic.
    */
-  async update(id: number, updateOrganizationDto: UpdateOrganizationDto): Promise<Organization> {
+  async update(
+    id: number,
+    updateOrganizationDto: UpdateOrganizationDto,
+  ): Promise<Organization> {
     const organization = await this.organizationRepository.preload({
       organizationID: id,
       ...updateOrganizationDto,
@@ -76,10 +85,20 @@ export class OrganizationsService {
   }
 
   /**
-   * Removes an organization.
+   * Removes an organization, but only if the requesting user is the owner.
    */
-  async remove(id: number): Promise<Organization> {
+  async remove(id: number, user: User): Promise<Organization> {
+    // First, find the organization
     const organization = await this.findOne(id);
+
+    // Check if the user ID from the token matches the organization's owner's ID
+    if (organization.owner.userID !== user.userID) {
+      throw new ForbiddenException(
+        'You are not allowed to delete this organization.',
+      );
+    }
+
+    // If the check passes, remove the organization
     return this.organizationRepository.remove(organization);
   }
 }

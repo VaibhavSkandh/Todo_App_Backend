@@ -32,7 +32,6 @@ export class OrganizationsController {
 
   /**
    * Finds all organizations.
-   * (In a real app, you would likely filter this to only show organizations the user belongs to).
    */
   @Get()
   findAll() {
@@ -49,7 +48,7 @@ export class OrganizationsController {
 
   /**
    * Updates an organization.
-   * (In a real app, you would add logic here to ensure the user has permission to update).
+   * Note: We haven't added ownership authorization to this route yet.
    */
   @Patch(':id')
   update(
@@ -59,8 +58,13 @@ export class OrganizationsController {
     return this.organizationsService.update(+id, updateOrganizationDto);
   }
 
+  /**
+   * Deletes an organization.
+   * Authorization logic is handled in the service.
+   */
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.organizationsService.remove(+id);
+  remove(@Param('id') id: string, @Request() req) {
+    // We pass the organization ID and the user object to the service for the ownership check.
+    return this.organizationsService.remove(+id, req.user);
   }
 }
