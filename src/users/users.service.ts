@@ -1,9 +1,19 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+// src/users/users.service.ts
+
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './entities/user.entity';
+import { User, AuthProvider } from './entities/user.entity';
 import * as bcrypt from 'bcryptjs';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -14,21 +24,23 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto) {
     const existingUser = await this.usersRepository.findOne({
-      where: [{ email: createUserDto.email }, { username: createUserDto.username }],
+      where: [
+        { email: createUserDto.email },
+        { username: createUserDto.username },
+      ],
     });
 
     if (existingUser) {
       throw new ConflictException('Username or Email already exists');
     }
 
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
 
     const newUser = this.usersRepository.create({
       email: createUserDto.email,
       username: createUserDto.username,
       passwordHash: hashedPassword,
-      authProvider: 'email',
+      authProvider: AuthProvider.EMAIL,
     });
 
     const savedUser = await this.usersRepository.save(newUser);
@@ -36,8 +48,28 @@ export class UsersService {
     return result;
   }
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+async findAll(paginationDto: PaginationDto) {
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await this.usersRepository.findAndCount({
+      skip: skip,
+      take: limit,
+      order: {
+        userID: 'ASC', // Optional: order the results
+      },
+    });
+
+    return {
+      data: users,
+      meta: {
+        totalItems: total,
+        itemCount: users.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async findOne(id: number): Promise<User> {
@@ -54,5 +86,36 @@ export class UsersService {
       .where('user.email = :email', { email })
       .addSelect('user.passwordHash')
       .getOne();
+  }
+
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.findOne(id);
+    Object.assign(user, updateUserDto);
+    return this.usersRepository.save(user);
+  }
+
+  async updateProfile(
+    id: number,
+    updateProfileDto: UpdateProfileDto,
+    currentUser: User,
+  ): Promise<User> {
+    if (currentUser.userID !== id) {
+      throw new ForbiddenException(
+        'You are only allowed to update your own profile.',
+      );
+    }
+    const user = await this.findOne(id);
+    Object.assign(user, updateProfileDto);
+    return this.usersRepository.save(user);
+  }
+
+  async remove(id: number, currentUser: User): Promise<User> {
+    if (currentUser.userID !== id) {
+      throw new ForbiddenException(
+        'You are only allowed to delete your own profile.',
+      );
+    }
+    const user = await this.findOne(id);
+    return this.usersRepository.remove(user);
   }
 }
