@@ -14,7 +14,7 @@ import { AuthModule } from './auth/auth.module';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      inject: [ConfigService],
+      inject: [ConfigService], 
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         host: configService.get<string>('DB_HOST'),
@@ -25,6 +25,7 @@ import { AuthModule } from './auth/auth.module';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: false,
         migrations: [__dirname + '/../db/migrations/*{.ts,.js}'],
+
       }),
     }),
     UsersModule,

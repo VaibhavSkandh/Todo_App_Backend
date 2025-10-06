@@ -21,9 +21,7 @@ export class AuthService {
 
     // Case 2: User is found, but the password hash is missing.
     if (!user.passwordHash) {
-      console.error(
-        'VALIDATION FAILED: User found, but passwordHash is missing.',
-      );
+      console.error('VALIDATION FAILED: User found, but passwordHash is missing.');
       return null;
     }
 

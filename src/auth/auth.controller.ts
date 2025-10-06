@@ -1,12 +1,5 @@
 // src/auth/auth.controller.ts
-import {
-  Controller,
-  Request,
-  Post,
-  UseGuards,
-  Body,
-  Get,
-} from '@nestjs/common';
+import { Controller, Request, Post, UseGuards, Body, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
