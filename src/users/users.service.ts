@@ -6,23 +6,26 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { User, AuthProvider } from './entities/user.entity';
-import * as bcrypt from 'bcryptjs';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { User, AuthProvider } from './entities/user.entity';
+import { PaginationDto } from './../../src/common/dto/pagination.dto';
+import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private readonly configService: ConfigService,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const existingUser = await this.usersRepository.findOne({
       where: [
         { email: createUserDto.email },
@@ -34,29 +37,44 @@ export class UsersService {
       throw new ConflictException('Username or Email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
+    let hashedPassword: string | null = null;
+    if (createUserDto.password) {
+      // 👇 Provide a default value of 12 for the salt rounds
+      const saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS', 12);
+      hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString('hex');
 
     const newUser = this.usersRepository.create({
       email: createUserDto.email,
       username: createUserDto.username,
       passwordHash: hashedPassword,
-      authProvider: AuthProvider.EMAIL,
+      authProvider: createUserDto.authProvider || AuthProvider.EMAIL,
+      emailVerificationToken: verificationToken,
     });
 
-    const savedUser = await this.usersRepository.save(newUser);
-    const { passwordHash, ...result } = savedUser;
-    return result;
+    return this.usersRepository.save(newUser);
   }
 
-async findAll(paginationDto: PaginationDto) {
+  async findAll(paginationDto: PaginationDto) {
     const { page, limit } = paginationDto;
     const skip = (page - 1) * limit;
 
     const [users, total] = await this.usersRepository.findAndCount({
+      select: {
+        userID: true,
+        email: true,
+        username: true,
+        status: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       skip: skip,
       take: limit,
       order: {
-        userID: 'ASC', // Optional: order the results
+        userID: 'ASC',
       },
     });
 
@@ -80,12 +98,25 @@ async findAll(paginationDto: PaginationDto) {
     return user;
   }
 
+  async findOneByVerificationToken(token: string): Promise<User | null> {
+    return this.usersRepository.findOneBy({ emailVerificationToken: token });
+  }
+
   async findOneByEmail(email: string): Promise<User | null> {
     return this.usersRepository
       .createQueryBuilder('user')
       .where('user.email = :email', { email })
       .addSelect('user.passwordHash')
       .getOne();
+  }
+
+  async findOneByPasswordResetToken(hashedToken: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: MoreThan(new Date()),
+      },
+    });
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
@@ -116,6 +147,6 @@ async findAll(paginationDto: PaginationDto) {
       );
     }
     const user = await this.findOne(id);
-    return this.usersRepository.remove(user);
+    return this.usersRepository.softRemove(user);
   }
 }

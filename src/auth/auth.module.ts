@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtRefreshStrategy } from './jwt-refresh.strategy';
+import { GoogleStrategy } from './google.strategy';
 
 @Module({
   imports: [

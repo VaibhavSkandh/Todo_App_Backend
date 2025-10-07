@@ -21,9 +21,6 @@ export class OrganizationsService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  /**
-   * Creates a new organization and assigns the authenticated user as the owner.
-   */
   async create(
     createOrganizationDto: CreateOrganizationDto,
     user: User,
@@ -32,24 +29,18 @@ export class OrganizationsService {
 
     const newOrg = this.organizationRepository.create({
       orgName,
-      owner: user, // Assign the user object directly
+      owner: user,
     });
 
     return this.organizationRepository.save(newOrg);
   }
 
-  /**
-   * Finds all organizations.
-   */
   findAll(): Promise<Organization[]> {
     return this.organizationRepository.find({
-      relations: ['owner'], // Optionally include the owner relation
+      relations: ['owner'],
     });
   }
 
-  /**
-   * Finds a single organization by its ID.
-   */
   async findOne(id: number): Promise<Organization> {
     const organization = await this.organizationRepository.findOne({
       where: { organizationID: id },
@@ -61,13 +52,8 @@ export class OrganizationsService {
     }
 
     return organization;
-
   }
 
-  /**
-   * Updates an organization's data.
-   * Note: This does not currently have authorization logic.
-   */
   async update(
     id: number,
     updateOrganizationDto: UpdateOrganizationDto,
@@ -84,21 +70,15 @@ export class OrganizationsService {
     return this.organizationRepository.save(organization);
   }
 
-  /**
-   * Removes an organization, but only if the requesting user is the owner.
-   */
   async remove(id: number, user: User): Promise<Organization> {
-    // First, find the organization
     const organization = await this.findOne(id);
 
-    // Check if the user ID from the token matches the organization's owner's ID
     if (organization.owner.userID !== user.userID) {
       throw new ForbiddenException(
         'You are not allowed to delete this organization.',
       );
     }
 
-    // If the check passes, remove the organization
-    return this.organizationRepository.remove(organization);
+    return this.organizationRepository.softRemove(organization);
   }
 }

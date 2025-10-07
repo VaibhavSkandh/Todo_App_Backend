@@ -1,7 +1,7 @@
 // src/config/env.validation.ts
 
 import { plainToClass } from 'class-transformer';
-import { IsEnum, IsNumber, IsString, validateSync } from 'class-validator';
+import { IsEnum, IsNumber, IsString, MinLength, validateSync } from 'class-validator';
 
 enum Environment {
   Development = 'development',
@@ -32,7 +32,17 @@ class EnvironmentVariables {
   DB_DATABASE: string;
 
   @IsString()
+  @MinLength(32, { message: 'JWT_SECRET must be at least 32 characters long' }) // 👈 Add this
   JWT_SECRET: string;
+  
+  @IsNumber()
+  BCRYPT_SALT_ROUNDS: number;
+
+  @IsString()
+  JWT_ACCESS_TOKEN_EXPIRY: string;
+
+  @IsString()
+  JWT_REFRESH_TOKEN_EXPIRY: string;
 }
 
 export function validate(config: Record<string, unknown>) {

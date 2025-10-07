@@ -9,7 +9,8 @@ import {
   Param,
   Delete,
   UseGuards,
-  Query
+  Query,
+  UseInterceptors
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -19,6 +20,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('users')
 export class UsersController {
@@ -38,6 +40,7 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(CacheInterceptor)
   @Patch(':id')
   updateProfile(
     @Param('id') id: string,

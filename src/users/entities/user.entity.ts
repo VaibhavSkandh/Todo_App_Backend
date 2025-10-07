@@ -7,6 +7,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  DeleteDateColumn,
+  Index,
 } from 'typeorm';
 import { Organization } from '../../organizations/entities/organization.entity';
 
@@ -28,14 +30,22 @@ export enum AuthProvider {
 }
 
 @Entity('users')
+@Index(['email'], { unique: true })
+@Index(['username'], { unique: true })
 export class User {
   @PrimaryGeneratedColumn()
   userID: number;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
+  @Column({ type: 'varchar', length: 255 })
   email: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ default: false })
+  isEmailVerified: boolean;
+
+  @Column({ type: 'varchar', nullable: true, select: false })
+  emailVerificationToken: string;
+
+  @Column({ type: 'varchar', length: 50 })
   username: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -47,9 +57,15 @@ export class User {
     default: AuthProvider.EMAIL,
   })
   authProvider: AuthProvider;
+  
+  @Column({ type: 'varchar', length: 255, select: false, nullable: true })
+  passwordHash: string | null;
 
-  @Column({ type: 'varchar', length: 255, select: false })
-  passwordHash: string;
+  @Column({ type: 'varchar', nullable: true, select: false })
+  passwordResetToken?: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  passwordResetExpires?: Date;
 
   @Column({
     type: 'enum',
@@ -70,6 +86,9 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt?: Date;
 
   @OneToMany(() => Organization, (organization) => organization.owner)
   organizations: Organization[];

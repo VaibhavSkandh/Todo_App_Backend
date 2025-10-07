@@ -1,34 +1,36 @@
 // src/organizations/entities/organization.entity.ts
-import { User } from '../../users/entities/user.entity';
+
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  JoinColumn,
 } from 'typeorm';
+import { User } from './../../users/entities/user.entity';
 
 @Entity('organizations')
 export class Organization {
   @PrimaryGeneratedColumn()
-  organizationID: number; // camelCase
+  organizationID: number;
 
   @Column({ type: 'varchar', length: 255 })
-  orgName: string; // camelCase
+  orgName: string;
 
-  @Column({ default: false })
-  isDeleted: boolean; // camelCase
+  @DeleteDateColumn()
+  deletedAt?: Date;
 
   @CreateDateColumn()
-  createdAt: Date; // camelCase
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date; // camelCase
+  updatedAt: Date;
 
-  // Corrected from user.Organizations to user.organizations
   @ManyToOne(() => User, (user) => user.organizations, { eager: false })
-  @JoinColumn({ name: 'ownerID' }) // camelCase
-  owner: User; // camelCase
+  @JoinColumn({ name: 'ownerID' })
+  owner: User;
 }

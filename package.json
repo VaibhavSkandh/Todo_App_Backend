@@ -24,6 +24,8 @@
     "migration:revert": "npm run typeorm -- migration:revert"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^2.0.2",
+    "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -38,14 +40,18 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "bcryptjs": "^3.0.2",
+    "cache-manager": "^7.2.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "nodemailer": "^7.0.9",
     "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sanitize-html": "^2.17.0",
     "typeorm": "^0.3.27"
   },
   "devDependencies": {
@@ -58,6 +64,9 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.18.8",
+    "@types/nodemailer": "^7.0.2",
+    "@types/passport-google-oauth20": "^2.0.16",
+    "@types/sanitize-html": "^2.16.0",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",

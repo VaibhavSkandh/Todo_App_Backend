@@ -8,11 +8,16 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost));
 
   app.useGlobalPipes(new ValidationPipe());
-  app.enableCors();
+
+  app.enableCors({
+    origin: process.env.ALLOWED_ORIGINS?.split(','),
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Todo Backend API')
@@ -20,7 +25,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
