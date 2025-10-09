@@ -12,6 +12,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from './../../users/entities/user.entity';
+import { List } from './../../lists/entities/list.entity'
 
 @Entity('organizations')
 export class Organization {
@@ -33,4 +34,7 @@ export class Organization {
   @ManyToOne(() => User, (user) => user.organizations, { eager: false })
   @JoinColumn({ name: 'ownerID' })
   owner: User;
+
+  @OneToMany(() => List, (list) => list.organization)
+  lists: List[];
 }

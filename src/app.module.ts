@@ -14,6 +14,7 @@ import { validate } from '../config/env.validation';
 import { HealthModule } from './health/health.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { UsersModule } from './users/users.module';
+import { ListsModule } from './lists/lists.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { UsersModule } from './users/users.module';
     OrganizationsModule,
     AuthModule,
     HealthModule,
+    ListsModule,
   ],
   controllers: [AppController],
   providers: [

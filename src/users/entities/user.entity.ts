@@ -11,6 +11,7 @@ import {
   Index,
 } from 'typeorm';
 import { Organization } from '../../organizations/entities/organization.entity';
+import { List } from './../../lists/entities/list.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -95,4 +96,7 @@ export class User {
 
   @Column({ type: 'varchar', nullable: true, select: false })
   hashedRefreshToken?: string;
+
+  @OneToMany(() => List, (list) => list.owner)
+  lists: List[];
 }
