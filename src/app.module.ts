@@ -15,6 +15,7 @@ import { HealthModule } from './health/health.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { UsersModule } from './users/users.module';
 import { ListsModule } from './lists/lists.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { ListsModule } from './lists/lists.module';
     AuthModule,
     HealthModule,
     ListsModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [

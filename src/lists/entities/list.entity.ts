@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { User } from './../../users/entities/user.entity';
 import { Organization } from './../../organizations/entities/organization.entity';
+import { Task } from './../../tasks/entities/task.entity';
 
 @Entity('lists')
 export class List {
@@ -47,4 +48,7 @@ export class List {
   })
   @JoinColumn({ name: 'organizationID' })
   organization: Organization | null;
+
+  @OneToMany(() => Task, (task) => task.list)
+  tasks: Task[];
 }
