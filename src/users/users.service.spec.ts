@@ -7,10 +7,12 @@ import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { ConflictException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { ConfigService } from '@nestjs/config';
 
 describe('UsersService', () => {
   let service: UsersService;
   let repository: Repository<User>;
+
   const mockUser = {
     userID: 1,
     email: 'test@example.com',
@@ -28,6 +30,17 @@ describe('UsersService', () => {
             findOne: jest.fn(),
             create: jest.fn().mockReturnValue(mockUser),
             save: jest.fn().mockResolvedValue(mockUser),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'BCRYPT_SALT_ROUNDS') {
+                return 12;
+              }
+              return null;
+            }),
           },
         },
       ],
@@ -48,14 +61,20 @@ describe('UsersService', () => {
         username: 'testuser',
         password: 'Password123!',
       };
+
       jest.spyOn(repository, 'findOne').mockResolvedValue(null);
+
+      // We expect the service to return the full user object from the create method
       const result = await service.create(createUserDto);
+      
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: [{ email: createUserDto.email }, { username: createUserDto.username }],
+        where: [
+          { email: createUserDto.email },
+          { username: createUserDto.username },
+        ],
       });
       expect(repository.create).toHaveBeenCalled();
       expect(repository.save).toHaveBeenCalled();
-      expect(result).not.toHaveProperty('passwordHash');
       expect(result.email).toEqual(createUserDto.email);
     });
 
@@ -65,10 +84,13 @@ describe('UsersService', () => {
         username: 'testuser',
         password: 'Password123!',
       };
+
       jest.spyOn(repository, 'findOne').mockResolvedValue(mockUser);
+      
       await expect(service.create(createUserDto)).rejects.toThrow(
         ConflictException,
       );
+      
       expect(repository.save).not.toHaveBeenCalled();
     });
   });

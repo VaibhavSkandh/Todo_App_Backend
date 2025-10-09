@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { Organization } from '../../organizations/entities/organization.entity';
 import { List } from './../../lists/entities/list.entity';
+import { Task } from './../../tasks/entities/task.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -99,4 +100,7 @@ export class User {
 
   @OneToMany(() => List, (list) => list.owner)
   lists: List[];
+
+  @OneToMany(() => Task, (task) => task.createdBy)
+  createdTasks: Task[];
 }
